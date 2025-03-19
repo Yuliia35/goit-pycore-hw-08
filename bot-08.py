@@ -32,19 +32,12 @@ class Birthday(Field):
         super().__init__(value)
 
 class Record:
-    try:
-        with open("recordslist.pkl", "rb") as file:
-            list_of_objects = pickle.load(file)
-    except FileNotFoundError:
-        list_of_objects = list()
 
     def __init__(self, name):
         self.name = Name(name)
         self.phones = []
         self.birthday = None
-        Record.list_of_objects.append(self.__dict__)
-        with open("recordslist.pkl", "wb") as file:
-            pickle.dump(Record.list_of_objects, file)
+        
 
     def add_phone(self, phone):
         self.phones.append(Phone(phone))
@@ -72,8 +65,6 @@ class Record:
 
     def add_birthday(self, birthday):
         self.birthday = Birthday(birthday)
-        with open("recordslist.pkl", "wb") as file:
-            pickle.dump(Record.list_of_objects, file)
 
     def __str__(self):
         phones = "; ".join(p.value for p in self.phones)
@@ -112,6 +103,18 @@ class AddressBook(UserDict):
 
     def __str__(self):
         return "\n".join(str(record) for record in self.data.values())
+
+def save_data(book, filename="addressbook.pkl"):
+    with open(filename, "wb") as f:
+        pickle.dump(book, f)
+
+
+def load_data(filename="addressbook.pkl"):
+    try:
+        with open(filename, "rb") as f:
+            return pickle.load(f)
+    except FileNotFoundError:
+        return AddressBook()  # Повернути нову адресну книгу, якщо файл не знайдено
 
 def input_error(func):
     def wrapper(*args, **kwargs):
@@ -157,16 +160,7 @@ def birthdays(args, book: AddressBook):
     if not upcoming:
         return "No birthdays in the next 7 days."
     return "\n".join(f"{item['name']}: {item['birthday']}" for item in upcoming)
-def save_data(book, filename="addressbook.pkl"):
-    with open(filename, "wb") as f:
-        pickle.dump(book, f)
 
-def load_data(filename="addressbook.pkl"):
-    try:
-        with open(filename, "rb") as f:
-            return pickle.load(f)
-    except FileNotFoundError:
-        return AddressBook()
 
 @input_error
 def change_phone(args, book: AddressBook):
@@ -186,7 +180,7 @@ def show_phones(args, book: AddressBook):
     return f"Contact {name} not found."
 
 def main():
-    book = AddressBook()
+    book = load_data()
     print("Welcome to the assistant bot!")
     while True:
         user_input = input("Enter a command: ").strip()
